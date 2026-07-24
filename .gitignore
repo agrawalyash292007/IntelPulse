@@ -1,0 +1,9 @@
+# Ignore the virtual environment folder (too large and OS-dependent)
+.venv/
+
+# Ignore compiled Python bytecode files generated at runtime
+__pycache__/
+*.pyc
+
+# Ignore local secret environment variable files
+.env
