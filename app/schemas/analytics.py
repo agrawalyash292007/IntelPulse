@@ -1,9 +1,9 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Dict, Any, Optional
 
 # Request Schema: Data sent BY the client TO your API
 class MarketAnalysisRequest(BaseModel):
-    ticker: str = Field(..., min_length=1, max_length=10, example="NVDA")
+    ticker: str = Field(..., min_length=1, max_length=10, json_schema_extra={"example": "NVDA"})
     timeframe_days: int = Field(default=30, ge=1, le=365, description="Historical range in days")
     include_indicators: bool = Field(default=True)
 
@@ -13,5 +13,5 @@ class MarketAnalysisResponse(BaseModel):
     status: str
     predicted_trend: str
     confidence_score: float
-    key_indicators: List[str]
+    key_indicators: Dict[str, Any]
     timeframe_days: int
