@@ -1,20 +1,20 @@
 from fastapi import FastAPI
 from app.core.config import settings
+from app.api.v1.api import api_router
 
-# Initialize FastAPI app using attributes from our config.py
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-# Create a basic health check endpoint
+# Base health check
 @app.get("/health", tags=["Health"])
 async def health_check():
-    """
-    Health check endpoint to verify backend operational status.
-    """
     return {
         "status": "healthy",
         "environment": settings.ENVIRONMENT,
         "project": settings.PROJECT_NAME
     }
+
+# Mount all API v1 routes (/api/v1/analytics/analyze)
+app.include_router(api_router, prefix=settings.API_V1_STR)
