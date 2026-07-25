@@ -25,10 +25,16 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Download NLTK VADER Lexicon
+      run: |
+        python -c "import nltk; nltk.download('vader_lexicon')"
+
     - name: Train ML Model Weights
       run: |
         python -m app.ml.trainer
 
     - name: Run Pytest Suite
+      env:
+        PYTHONPATH: .
       run: |
         pytest
