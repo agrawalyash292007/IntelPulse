@@ -4,7 +4,7 @@ IntelPulse is a market analytics web application that provides machine-learning-
 
 **Project repository:** [github.com/agrawalyash292007/IntelPulse](https://github.com/agrawalyash292007/IntelPulse)
 
-**Live demo:** Add the Render URL after the first successful deployment (for example, `https://intelpulse.onrender.com`).
+**Live demo:** [intelpulse.onrender.com](https://intelpulse.onrender.com)
 
 ## Features
 
