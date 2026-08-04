@@ -1,9 +1,5 @@
-import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import yfinance as yf
-
-# Download VADER lexicon data silently
-nltk.download("vader_lexicon", quiet=True)
 
 
 def get_news_sentiment(ticker: str) -> float:

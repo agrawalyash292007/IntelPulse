@@ -15,3 +15,4 @@ class MarketAnalysisResponse(BaseModel):
     confidence_score: float
     key_indicators: Dict[str, Any]
     timeframe_days: int
+    sentiment_score: Optional[float] = None

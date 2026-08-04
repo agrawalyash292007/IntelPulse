@@ -1,5 +1,5 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Optional, Any, Dict
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.analytics import MarketAnalysisRequest, MarketAnalysisResponse
@@ -26,8 +26,9 @@ async def analyze_market(
 ):
     """
     Runs market prediction and saves the output to the database.
+    Supports US equities, Indian stocks (.NS/.BO), and Forex pairs (=X).
     """
-    ticker_clean = payload.ticker.upper()
+    ticker_clean = payload.ticker.upper().strip()
 
     if ticker_clean == "INVALID":
         raise HTTPException(
@@ -47,6 +48,29 @@ async def analyze_market(
     )
 
     return response
+
+
+@router.get(
+    "/chart",
+    summary="Get historical price candles for charts"
+)
+async def get_chart_candles(
+    ticker: str = Query(..., description="Ticker symbol (e.g., RELIANCE.NS, USDINR=X, AAPL)"),
+    period: str = Query("1mo", description="Historical period (e.g., 1mo, 3mo, 6mo, 1y)"),
+    analytics_service: AnalyticsService = Depends(get_analytics_service)
+) -> List[Dict[str, Any]]:
+    """
+    Returns candlestick OHLC data formatted for TradingView Lightweight Charts rendering.
+    """
+    chart_data = await analytics_service.get_chart_data(ticker=ticker, period=period)
+
+    if not chart_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No price data found for ticker '{ticker}' over period '{period}'."
+        )
+
+    return chart_data
 
 
 @router.get(

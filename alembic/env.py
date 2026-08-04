@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 # 1. Import your models Base & models to register them
-from app.db.session import Base
+from app.db.session import Base, DATABASE_URL
 from app.models import User, PredictionHistory
 
 # Alembic Config object
@@ -20,7 +20,7 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 # Set database URL dynamically
-config.set_main_option("sqlalchemy.url", "sqlite+aiosqlite:///./intelpulse.db")
+config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
 
 def run_migrations_offline() -> None:

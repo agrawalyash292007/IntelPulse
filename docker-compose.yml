@@ -1,0 +1,17 @@
+services:
+  api:
+    build: .
+    container_name: intelpulse_backend
+    ports:
+      - "8000:8000"
+    environment:
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in your environment or .env file}
+      API_V1_STR: /api/v1
+      ENVIRONMENT: production
+      DATABASE_URL: sqlite+aiosqlite:///./data/intelpulse.db
+    volumes:
+      - intelpulse_data:/app/data
+    restart: always
+
+volumes:
+  intelpulse_data:

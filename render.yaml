@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: intelpulse
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: API_V1_STR
+        value: /api/v1
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: intelpulse-db
+          property: connectionString
+
+databases:
+  - name: intelpulse-db
+    plan: free
+    databaseName: intelpulse
+    user: intelpulse

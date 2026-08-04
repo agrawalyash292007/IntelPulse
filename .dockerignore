@@ -1,0 +1,8 @@
+.venv
+__pycache__
+*.pyc
+.git
+.pytest_cache
+intelpulse.db
+.env
+.DS_Store

@@ -40,5 +40,12 @@ async def test_user_signup_and_login(client):
 async def test_analytics_protected_route(client):
     """Test that /analytics/analyze requires authentication."""
     # Attempting request without token should fail with 401 Unauthorized
-    response = await client.post("/api/v1/analytics/analyze", json={"ticker": "AAPL", "days": 30})
+    response = await client.post("/api/v1/analytics/analyze", json={"ticker": "AAPL", "timeframe_days": 30})
     assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_static_frontend_is_served(client):
+    response = await client.get("/")
+    assert response.status_code == 200
+    assert "IntelPulse" in response.text

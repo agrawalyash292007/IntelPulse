@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "IntelPulse API"
     API_V1_STR: str = "/api/v1"
     ENVIRONMENT: str = "development"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./intelpulse.db"
     
     # Security Key
     SECRET_KEY: str

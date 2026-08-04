@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.api.v1.api import api_router
 
@@ -18,3 +19,4 @@ async def health_check():
 
 # Mount all API v1 routes (/api/v1/analytics/analyze)
 app.include_router(api_router, prefix=settings.API_V1_STR)
+app.mount("/", StaticFiles(directory="static", html=True), name="static")

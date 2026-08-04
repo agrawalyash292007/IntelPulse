@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IntelPulse - Quant Analytics & ML Predictions</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- TradingView Lightweight Charts -->
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col">
+
+  <!-- Navigation -->
+  <nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <div class="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/30">IP</div>
+        <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">IntelPulse</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <div id="authStatus" class="text-sm font-medium text-slate-400">
+          Status: <span class="text-slate-500">Checking...</span>
+        </div>
+        <button id="logoutBtn" onclick="handleLogout()" class="hidden text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-3 py-1.5 rounded-lg border border-slate-700 transition">
+          Log Out
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-8 my-4">
+
+    <!-- Left Column: Authentication -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
+      <h2 class="text-xl font-semibold text-white border-b border-slate-800 pb-3">User Authentication</h2>
+
+      <form id="authForm" class="space-y-4" onsubmit="event.preventDefault();">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Email Address</label>
+          <input type="email" id="email" required placeholder="user@intelpulse.ai" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Password</label>
+          <input type="password" id="password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition"/>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <button type="button" onclick="handleAuth('/api/v1/auth/signup')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-3 rounded-xl transition text-sm">Sign Up</button>
+          <button type="button" onclick="handleAuth('/api/v1/auth/login')" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition text-sm shadow-lg shadow-indigo-500/20">Log In</button>
+        </div>
+      </form>
+
+      <div id="authAlert" class="hidden p-3 rounded-xl text-xs font-medium border"></div>
+
+      <!-- Quick Ticker Suggestions -->
+      <div class="border-t border-slate-800 pt-4 flex flex-col gap-2">
+        <span class="text-xs text-slate-500 font-medium">Quick Assets:</span>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="setTicker('RELIANCE.NS')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-mono text-indigo-300">RELIANCE.NS</button>
+          <button onclick="setTicker('TATAMOTORS.NS')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-mono text-indigo-300">TATAMOTORS.NS</button>
+          <button onclick="setTicker('USDINR=X')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-mono text-emerald-300">USDINR=X</button>
+          <button onclick="setTicker('EURUSD=X')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-mono text-emerald-300">EURUSD=X</button>
+          <button onclick="setTicker('AAPL')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-mono text-slate-300">AAPL</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column: Predictor & Interactive Chart -->
+    <section class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
+      <h2 class="text-xl font-semibold text-white border-b border-slate-800 pb-3">Quant Analytics & Market Chart</h2>
+
+      <div class="flex flex-col sm:flex-row gap-4">
+        <input type="text" id="tickerInput" value="RELIANCE.NS" placeholder="e.g. RELIANCE.NS, USDINR=X, AAPL" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 uppercase tracking-wider focus:outline-none focus:border-indigo-500 transition"/>
+        <button onclick="runPrediction()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-6 py-3 rounded-xl transition text-sm shadow-lg shadow-emerald-600/20">Analyze & Load Chart</button>
+      </div>
+
+      <!-- Live Prediction Card -->
+      <div id="predictionCard" class="hidden bg-slate-950 border border-slate-800/80 rounded-2xl p-6">
+        <!-- Dynamic Prediction Stats -->
+      </div>
+
+      <!-- TradingView Chart Container -->
+      <div class="bg-slate-950 border border-slate-800/80 rounded-2xl p-4 min-h-[350px] flex flex-col">
+        <div class="text-xs text-slate-400 font-medium mb-3 flex justify-between items-center">
+          <span id="chartTitle">Price Movement Chart</span>
+          <span class="text-slate-600">Daily Candles</span>
+        </div>
+        <div id="chartContainer" class="w-full h-[300px] flex-1 flex justify-center items-center text-slate-500 text-sm">
+          Enter an asset ticker above and click "Analyze & Load Chart".
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- JavaScript Handler -->
+  <script>
+    const API_BASE = window.location.origin;
+    let jwtToken = localStorage.getItem('intelpulse_token') || null;
+    let chartInstance = null;
+
+    function setTicker(val) {
+      document.getElementById('tickerInput').value = val;
+    }
+
+    async function checkBackendHealth() {
+      const statusEl = document.getElementById('authStatus');
+      const logoutBtn = document.getElementById('logoutBtn');
+
+      try {
+        const res = await fetch(`${API_BASE}/health`);
+        if (!res.ok) {
+          statusEl.innerHTML = 'Status: <span class="text-rose-400">Server Error 🔴</span>';
+          logoutBtn.classList.add('hidden');
+          return;
+        }
+
+        // Verify token validity with an authenticated request
+        if (jwtToken) {
+          const authCheck = await fetch(`${API_BASE}/api/v1/analytics/history`, {
+            headers: { 'Authorization': `Bearer ${jwtToken}` }
+          });
+
+          if (authCheck.ok) {
+            statusEl.innerHTML = 'Status: <span class="text-emerald-400">Authenticated 🔑</span>';
+            logoutBtn.classList.remove('hidden');
+          } else {
+            // Expired or invalid token
+            localStorage.removeItem('intelpulse_token');
+            jwtToken = null;
+            statusEl.innerHTML = 'Status: <span class="text-amber-400">Not Logged In 🟡</span>';
+            logoutBtn.classList.add('hidden');
+          }
+        } else {
+          // Server online, but user is logged out
+          statusEl.innerHTML = 'Status: <span class="text-amber-400">Not Logged In 🟡</span>';
+          logoutBtn.classList.add('hidden');
+        }
+      } catch (err) {
+        statusEl.innerHTML = 'Status: <span class="text-rose-400">Disconnected 🔴</span>';
+        logoutBtn.classList.add('hidden');
+      }
+    }
+
+    function handleLogout() {
+      localStorage.removeItem('intelpulse_token');
+      jwtToken = null;
+      showAlert('Logged out successfully.', 'border-indigo-500/50 bg-indigo-500/10 text-indigo-300');
+      checkBackendHealth();
+    }
+
+    async function handleAuth(endpoint) {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      if (!email || !password) {
+        showAlert('Please enter both email and password.', 'border-amber-500/50 bg-amber-500/10 text-amber-300');
+        return;
+      }
+
+      try {
+        let response;
+        if (endpoint.includes('login')) {
+          const formData = new URLSearchParams();
+          formData.append('username', email);
+          formData.append('password', password);
+
+          response = await fetch(`${API_BASE}${endpoint}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData
+          });
+        } else {
+          response = await fetch(`${API_BASE}${endpoint}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          const errorMsg = Array.isArray(data.detail)
+            ? data.detail.map(e => `${e.loc[e.loc.length - 1]}: ${e.msg}`).join(', ')
+            : (data.detail || 'Authentication failed');
+          throw new Error(errorMsg);
+        }
+
+        if (data.access_token) {
+          jwtToken = data.access_token;
+          localStorage.setItem('intelpulse_token', jwtToken);
+          checkBackendHealth();
+          showAlert('Logged in successfully!', 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300');
+        } else {
+          showAlert('Account created successfully! Click Log In now.', 'border-indigo-500/50 bg-indigo-500/10 text-indigo-300');
+        }
+      } catch (err) {
+        showAlert(err.message, 'border-rose-500/50 bg-rose-500/10 text-rose-300');
+      }
+    }
+
+    async function runPrediction() {
+      const ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
+      const card = document.getElementById('predictionCard');
+
+      if (!ticker) return;
+
+      card.classList.remove('hidden');
+      card.innerHTML = `<div class="animate-pulse text-indigo-400 text-sm text-center">Running ML analysis for ${ticker}...</div>`;
+
+      try {
+        const token = localStorage.getItem('intelpulse_token');
+        if (!token) {
+          throw new Error('Please Log In on the left before running market predictions.');
+        }
+
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        };
+
+        const analyzeRes = await fetch(`${API_BASE}/api/v1/analytics/analyze`, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({ ticker: ticker })
+        });
+
+        const analyzeData = await analyzeRes.json();
+
+        if (!analyzeRes.ok) {
+          if (analyzeRes.status === 401) {
+            handleLogout();
+            throw new Error('Your session expired. Please log in again.');
+          }
+          const errorMsg = Array.isArray(analyzeData.detail)
+            ? analyzeData.detail.map(e => `${e.loc[e.loc.length - 1]}: ${e.msg}`).join(', ')
+            : (analyzeData.detail || 'Failed to execute analysis');
+          throw new Error(errorMsg);
+        }
+
+        const signal = analyzeData.predicted_trend || analyzeData.signal || 'HOLD';
+        const rawScore = analyzeData.confidence_score !== undefined ? analyzeData.confidence_score : analyzeData.confidence;
+        const confidence = rawScore !== undefined ? (rawScore * (rawScore <= 1 ? 100 : 1)).toFixed(1) : 'N/A';
+
+        // Extract key indicators
+        const indicators = analyzeData.key_indicators || {};
+        const rsi = indicators.rsi_14 !== undefined ? indicators.rsi_14 : 'N/A';
+        const smaSig = indicators.sma_signal || 'N/A';
+        const sentiment = indicators.news_sentiment_score !== undefined ? Number(indicators.news_sentiment_score).toFixed(2) : '0.00';
+
+        const signalColor = signal.toUpperCase().includes('BUY') || signal.toUpperCase().includes('BULLISH') ? 'text-emerald-400 border-emerald-500/30' :
+                            signal.toUpperCase().includes('SELL') || signal.toUpperCase().includes('BEARISH') ? 'text-rose-400 border-rose-500/30' : 'text-amber-400 border-amber-500/30';
+
+        card.innerHTML = `
+          <div class="w-full flex flex-col gap-6 text-left">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+              <div>
+                <span class="text-2xl font-bold tracking-wide">${analyzeData.ticker || ticker}</span>
+                <div class="text-xs text-emerald-400 mt-0.5">Prediction saved to DB!</div>
+              </div>
+              <span class="px-4 py-1.5 rounded-full border text-xs font-bold ${signalColor}">${signal}</span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                <div class="text-xs text-slate-500 uppercase">Confidence</div>
+                <div class="text-lg font-bold text-slate-100 mt-1">${confidence}${confidence !== 'N/A' ? '%' : ''}</div>
+              </div>
+              <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                <div class="text-xs text-slate-500 uppercase">RSI (14)</div>
+                <div class="text-lg font-bold text-slate-100 mt-1">${rsi}</div>
+              </div>
+              <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                <div class="text-xs text-slate-500 uppercase">SMA Cross</div>
+                <div class="text-sm font-bold text-indigo-400 mt-1.5 truncate">${smaSig}</div>
+              </div>
+              <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                <div class="text-xs text-slate-500 uppercase">News Sentiment</div>
+                <div class="text-lg font-bold text-slate-100 mt-1">${sentiment}</div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Load live candle data and render TradingView chart
+        await renderChart(analyzeData.ticker || ticker);
+
+      } catch (err) {
+        card.innerHTML = `<div class="text-rose-400 text-sm p-4 bg-rose-500/10 rounded-xl border border-rose-500/30">Error: ${err.message}</div>`;
+      }
+    }
+
+    async function renderChart(ticker) {
+      const container = document.getElementById('chartContainer');
+      document.getElementById('chartTitle').innerText = `${ticker} - Interactive Price Chart`;
+      container.innerHTML = ''; // Clear container
+
+      if (chartInstance) {
+        chartInstance.remove();
+        chartInstance = null;
+      }
+
+      chartInstance = LightweightCharts.createChart(container, {
+        width: container.clientWidth,
+        height: 300,
+        layout: {
+          background: { color: '#020617' },
+          textColor: '#94a3b8',
+        },
+        grid: {
+          vertLines: { color: '#0f172a' },
+          horzLines: { color: '#0f172a' },
+        },
+        crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+        priceScale: { borderColor: '#1e293b' },
+        timeScale: { borderColor: '#1e293b' },
+      });
+
+      // Updated v4+ series instantiation
+      const candlestickSeries = chartInstance.addSeries(LightweightCharts.CandlestickSeries, {
+        upColor: '#10b981',
+        downColor: '#f43f5e',
+        borderVisible: false,
+        wickUpColor: '#10b981',
+        wickDownColor: '#f43f5e',
+      });
+
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/analytics/chart?ticker=${encodeURIComponent(ticker)}&period=1mo`);
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.detail || 'Failed to load live candle data');
+        }
+        const candleData = await res.json();
+
+        if (!candleData || candleData.length === 0) {
+          throw new Error('No historical price data returned for this ticker.');
+        }
+
+        candlestickSeries.setData(candleData);
+        chartInstance.timeScale().fitContent();
+      } catch (err) {
+        container.innerHTML = `<div class="text-rose-400 text-xs p-4 bg-rose-500/10 rounded-xl border border-rose-500/30 flex items-center justify-center h-full">Could not render chart: ${err.message}</div>`;
+      }
+    }
+
+    function showAlert(msg, classes) {
+      const alertBox = document.getElementById('authAlert');
+      alertBox.className = `p-3 rounded-xl text-xs font-medium border ${classes}`;
+      alertBox.innerText = msg;
+    }
+
+    checkBackendHealth();
+  </script>
+</body>
+</html>
